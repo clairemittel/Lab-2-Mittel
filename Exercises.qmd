@@ -3,24 +3,216 @@ title: "Exercises"
 format: html
 editor: visual
 ---
-
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
 ```{r}
-1 + 1
+install.packages(d)
+library(dplyr)
 ```
 
-You can add options to executable code like this
 
 ```{r}
-#| echo: false
-2 * 2
+#1
+glimpse(tree_dat)
+#The structure has 8 columns and 131,386 rows. In the data set I can see tree 1's measurements through 1967.
+```
+```{r}
+#2
+tree_dat %>%
+  filter(standID == 1) %>%
+  tally()
+#There were 979 records in stand 1.
+```
+```{r}
+tree_count1 <- tree_dat %>%
+  filter(standID == 1)
+
+print(tree_count1)
+```
+```{r}
+#3
+tree_dat %>%
+  filter(species %in% c("ABBA", "PIST")) %>%
+  count(species)
+#There were 13,033 Abies balsamea and 4,188 Pinus strobus trees on record.
+```
+```{r}
+#4
+last_year <- max(tree_dat$year, na.rm = TRUE)
+tree_dat %>%
+  filter(year == last_year, age > 200) %>%
+  tally()
+#There were 7 trees older than 200 in the last year of the data set.
+```
+```{r}
+#5
+tree_dat %>%
+  slice_max(order_by = age, n = 1)
+oldest_tree <- tree_dat %>%
+  slice_max(order_by = age, n = 1)
+print(oldest_tree)
+#The oldest tree is tree 24 in stand 2 and it is 269 years old.
+```
+```{r}
+#6
+tree_dat %>%
+  filter(year == 2001) %>%
+  slice_max(order_by = age, n = 5)
+oldest_trees_2001 <- tree_dat %>%
+  filter(year == 2001) %>%
+  slice_max(order_by = age, n = 5)
+print(oldest_trees_2001)
+#The 5 oldest trees in 2001 are trees 24 and 25 in stand 2 and trees 1595 and 1598 in stand 24 and tree 1712 in stand 26.
+```
+```{r}
+#7
+sampled_trees <- tree_dat %>%
+  slice_sample(prop = 0.3)
+sample_size <- nrow(sampled_trees)
+print(sample_size)
+#There are 39415 trees in the 30% sample in 2002.
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+```{r}
+#8
+top_rad <- tree_dat %>%
+  filter(standID == 5, year == 2007) %>%
+  arrange(-rad_ib) %>%
+  slice_head(n = 3)
+print(top_rad)
+#The tree IDs are 128, 157, 135.
+```
+
+```{r}
+#9
+smallest_trees <- tree_dat %>%
+  select(treeID, standID, year, rad_ib) %>%
+  filter(standID == 3, year == 2007) %>%
+  slice_min(rad_ib, n = 3)
+print(smallest_trees)
+#The 3 smallest trees are 50, 56, and 36.
+```
+```{r}
+#10
+trees_q10 <- tree_dat %>%
+  select(-stand)
+glimpse(trees_q10)
+```
+```{r}
+#11
+?select
+id_columns <- tree_dat %>%
+ select(contains("ID")) 
+glimpse(id_columns)
+```
+```{r}
+#12
+id_stand <- tree_dat %>%
+  select(contains("ID") | contains("stand"))
+glimpse(id_stand)
+```
+```{r}
+#13
+units_tree <- tree_dat %>%
+  rename(inc_mm = inc) %>%
+  rename(rad_ib_mm = rad_ib)
+glimpse(units_tree)
+```
+```{r}
+#14
+mean_BA <- tree_dat %>%
+  mutate(rad_cm = rad_ib / 10) %>%
+  mutate(DBH = rad_cm * 2) %>%
+  mutate(BA = 0.00007854 * (DBH^2)) %>%
+  filter(species == "POTR", year == 2007) %>%
+  summarise(mean_BA_m2 = mean(BA, na.rm = TRUE))
+print(mean_BA)
+#The mean BA for the POTR species is 0.037 m^2.
+```
+```{r}
+#15
+established_trees <- tree_dat %>%
+  mutate(established = if_else(age > 5, TRUE, FALSE))  
+
+established_count <- established_trees %>%
+  count(established)
+print(established_count)
+#There are 122503 established trees.
+```
+```{r}
+#16
+classified_trees <- tree_dat %>%
+  mutate(rad_cm = rad_ib / 10) %>%
+  mutate(DBH = rad_cm * 2) %>%
+  mutate(DBH_class = case_when(
+    DBH >= 0 & DBH < 2.5 ~ "seedling",
+    DBH >= 2.5 & DBH < 10 ~ "sapling",
+    DBH >= 10 & DBH < 30 ~ "pole",
+    DBH >= 30 ~ "sawlog",
+    TRUE ~ NA_character_)) %>%
+  filter(year == 2007) %>%
+  count(DBH_class)
+print(classified_trees)
+#There were 1963 poles, 252 saplings, and 76 sawlogs in 2007.
+```
+```{r}
+#17
+DBH_SD <- tree_dat %>%
+  filter(year == 2007) %>%
+  mutate(rad_cm = rad_ib / 10) %>%
+  mutate(DBH = rad_cm * 2) %>%
+  summarise(mean_DBH = mean(DBH, na.rm = TRUE), sd_DBH = sd(DBH, na.rm = TRUE))
+print(DBH_SD)
+#In 2007, the mean DBH was 16.09 cm and the standard deviation was 6.14 cm.
+```
+```{r}
+#18
+oldestspecies <- tree_dat %>%
+  filter(year == 2003) %>%
+  group_by(species) %>%
+  summarise(mean_age = mean(age, na.rm = TRUE)) %>%
+  arrange(-mean_age) %>%
+  slice_head(n = 3) 
+print(oldestspecies)
+#The three oldest species in 2003 on average were THOC, FRNI, and PIST.
+```
+```{r}
+#19
+years_summary <- tree_dat %>%
+  summarise(unique_years = n_distinct(year), first_year = min(year, na.rm = TRUE), last_years = max(year, na.rm = TRUE))
+print(years_summary)
+#There are 111 unique years, 1897 is the first year and 2007 is the last year.
+```
+```{r}
+#20
+stand_years <- tree_dat %>%
+  group_by(standID) %>%
+  summarise(unique_years = n_distinct(year)) %>%
+  arrange(-unique_years)
+max_years <- max(stand_years$unique_years)
+largest_record <- stand_years %>%
+  filter(unique_years == max_years)
+print(largest_record)
+#The stands that have the largest record of unique years are 1, 15, 16, 17, and 24.
+```
+```{r}
+#Final question
+growth_rates <- tree_dat %>%
+  mutate(rad_cm = rad_ib / 10) %>%
+  mutate(DBH = rad_cm * 2) %>%
+  arrange(treeID, year) %>%
+  group_by(treeID) %>%
+  mutate(annual_growth = DBH - lag(DBH)) %>%
+  filter(!is.na(annual_growth)) %>%
+  summarise(total_years = n(), mean_growth = mean(annual_growth, na.rm = TRUE)) %>%
+  filter(total_years >= 10) %>%
+  ungroup() %>%
+  left_join(tree_dat %>% select(treeID, species) %>% distinct(), by = "treeID") %>%
+  group_by(species) %>%
+  summarise(mean_species_growth = mean(mean_growth, na.rm = TRUE), sd_species_growth = sd(mean_growth, na.rm = TRUE)) %>%
+  arrange(-mean_species_growth)
+fastest_species <- slice_head(growth_rates, n = 3)
+slowest_species <- slice_tail(growth_rates, n = 3)
+print(fastest_species)
+print(slowest_species)
+#The three fastest species were PIRE, PIBA, and POTR. The three slowest species were QURU, LALA, and THOC.
+```
+
