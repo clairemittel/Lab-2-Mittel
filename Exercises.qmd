@@ -4,7 +4,6 @@ format: html
 editor: visual
 ---
 ```{r}
-install.packages(d)
 library(dplyr)
 ```
 
