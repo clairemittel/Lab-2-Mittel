@@ -1,5 +1,6 @@
 ---
 title: "Exercises"
+author: "Claire Mittel"
 format: html
 editor: visual
 ---
